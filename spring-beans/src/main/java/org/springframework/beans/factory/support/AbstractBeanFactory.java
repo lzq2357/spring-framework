@@ -239,11 +239,20 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
 			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
 
+		//todo liziq 真正 获取bean的地方
+
+		//todo lizq 获取beanName，比如 把 别名换成beanName,  获取 BeanFactory 对象的 实际bean类型（比如去掉&）
 		final String beanName = transformedBeanName(name);
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+
+		//todo liziq 获取 对应的 ObjectFactory 解决循环依赖，如果有 ObjectFactory 就行了，不一定必须要 Bean对象，
+		// 根据 ObjectFactory.getObject() 获取 已实例化但未初始化的bean
 		Object sharedInstance = getSingleton(beanName);
+
+
+		//说明 bean 已经加载过了，直接返回实例
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -254,10 +263,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+
+			//返回 实例
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
 		else {
+			// 有参数 获取bean
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
 			if (isPrototypeCurrentlyInCreation(beanName)) {
@@ -287,15 +299,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+
+				// 记录 创建过
 				markBeanAsCreated(beanName);
 			}
 
 			try {
+				//继承 父类 bean 的属性
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
+
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
+				//todo liziq 依赖的对象，递归实例化
 				String[] dependsOn = mbd.getDependsOn();
+
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
 						if (isDependent(beanName, dep)) {
@@ -317,6 +335,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							//创建bean
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {

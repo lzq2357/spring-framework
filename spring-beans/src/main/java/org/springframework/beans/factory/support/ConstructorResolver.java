@@ -116,6 +116,9 @@ class ConstructorResolver {
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
 
+
+		// todo liziq 重点！！！ 有参数 构造bean，根据规则 选择 构造参数
+
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
@@ -123,11 +126,21 @@ class ConstructorResolver {
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
+		//getBean 传入explicitArgs， 如果有直接使用
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
 		else {
+
+			//getBean 没有传入参数，尝试从 配置文件解析，
+			// 先从缓存 取，取不到从配置文件 读入缓存
+
+
 			Object[] argsToResolve = null;
+
+			//加锁从 缓存取 （防止取的时候 缓存变动？）
+			//先查已 处理好的构造参数，  没有则查 原始的构造参数
+			// resolvedConstructorArguments 已处理的参数，  preparedConstructorArguments  配置文件读取的原始的构造参数
 			synchronized (mbd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
@@ -138,11 +151,16 @@ class ConstructorResolver {
 					}
 				}
 			}
+
+			// 缓存有参数
 			if (argsToResolve != null) {
+				//解析参数类型   argsToResolve -> argsToUse
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve, true);
 			}
 		}
 
+
+		//没有被缓存，则从 配置文件 读入缓存
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
 			Constructor<?>[] candidates = chosenCtors;
@@ -159,6 +177,7 @@ class ConstructorResolver {
 				}
 			}
 
+			// 只有一个 构造函数
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -182,24 +201,37 @@ class ConstructorResolver {
 				minNrOfArgs = explicitArgs.length;
 			}
 			else {
+				//todo liziq 配置文件中的 constructor-arg 参数
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
+				//
 				resolvedValues = new ConstructorArgumentValues();
+				//处理 参数值
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
+			//todo liziq 构造函数 排序 ： 先 public 构造函数，按参数个数排，  再非public，按参数个数排
 			AutowireUtils.sortConstructors(candidates);
+
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
+
+			//遍历构造 函数
 			for (Constructor<?> candidate : candidates) {
+
+				// 参数类型
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 
+				//已选择构造函数，且 给出的参数个数较多，可以直接停止，
+				// 因为 构造函数 按数量排序的，后面的 构造函数，参数个数只会更少
 				if (constructorToUse != null && argsToUse.length > paramTypes.length) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
 					break;
 				}
+
+				//参数 个数不匹配， 跳过
 				if (paramTypes.length < minNrOfArgs) {
 					continue;
 				}
@@ -207,13 +239,18 @@ class ConstructorResolver {
 				ArgumentsHolder argsHolder;
 				if (resolvedValues != null) {
 					try {
+						// 参数名称
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, paramTypes.length);
 						if (paramNames == null) {
+
+							//解析 构造函数的参数名称，用于按名称匹配的情况
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
 							if (pnd != null) {
 								paramNames = pnd.getParameterNames(candidate);
 							}
 						}
+
+						//
 						argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw, paramTypes, paramNames,
 								getUserDeclaredConstructor(candidate), autowiring, candidates.length == 1);
 					}
@@ -237,6 +274,9 @@ class ConstructorResolver {
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
 
+
+				//todo liziq 根据权重选择 构造参数，因为可能出现 A(object)， A(int) 这种情况
+				//精确的权重更小， 越小越好  minTypeDiffWeight  每次循环更新
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
@@ -276,10 +316,13 @@ class ConstructorResolver {
 			}
 
 			if (explicitArgs == null) {
+				//缓存下来
 				argsHolderToUse.storeCache(mbd, constructorToUse);
 			}
 		}
 
+
+		//todo liziq 有参构造函数，实例化
 		bw.setBeanInstance(instantiate(beanName, mbd, constructorToUse, argsToUse));
 		return bw;
 	}
@@ -641,6 +684,7 @@ class ConstructorResolver {
 
 		int minNrOfArgs = cargs.getArgumentCount();
 
+		//构造参数 的 index 属性
 		for (Map.Entry<Integer, ConstructorArgumentValues.ValueHolder> entry : cargs.getIndexedArgumentValues().entrySet()) {
 			int index = entry.getKey();
 			if (index < 0) {
@@ -786,6 +830,8 @@ class ConstructorResolver {
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			Executable executable, Object[] argsToResolve, boolean fallback) {
 
+
+		//转换 参数，  类型转换
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =

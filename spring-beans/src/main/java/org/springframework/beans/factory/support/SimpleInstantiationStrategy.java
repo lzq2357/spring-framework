@@ -59,6 +59,8 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
+
+		//todo liziq 底层 创建bean， hasMethodOverrides cglib 生成代理，，无重载的 直接 构造函数初始化
 		// Don't override the class with CGLIB if no overrides.
 		if (!bd.hasMethodOverrides()) {
 			Constructor<?> constructorToUse;

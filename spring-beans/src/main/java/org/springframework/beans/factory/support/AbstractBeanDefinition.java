@@ -179,6 +179,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private MutablePropertyValues propertyValues;
 
+	/**
+	 * todo liziq MethodOverrides：lookup / replaceMethod 对应的方法
+	 * */
 	@Nullable
 	private MethodOverrides methodOverrides;
 

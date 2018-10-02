@@ -1098,8 +1098,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	// Implementation of BeanFactory interface
 	//---------------------------------------------------------------------
 
+	/**  todo liziq  getBean 一般是调用到 AbstractBeanFactory.doGetBean() */
 	@Override
 	public Object getBean(String name) throws BeansException {
+
 		assertBeanFactoryActive();
 		return getBeanFactory().getBean(name);
 	}
