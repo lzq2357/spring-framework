@@ -257,6 +257,10 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * if none specified.
 	 */
 	protected EntityResolver getEntityResolver() {
+
+		//todo liziq   EntityResolver 指定dtd/xsd位置，默认是网上下载，
+		//todo liziq DelegatingEntityResolver指定 dtd 是直接在当前目录下找.dtd， xsd 指定通过 spring.schemas文件去找
+		// publicId 为null、 systemId : 一个uri
 		if (this.entityResolver == null) {
 			// Determine default EntityResolver to use.
 			ResourceLoader resourceLoader = getResourceLoader();
@@ -264,6 +268,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 				this.entityResolver = new ResourceEntityResolver(resourceLoader);
 			}
 			else {
+				//getBeanClassLoader 本地 loader去加载，即加载本地 的
 				this.entityResolver = new DelegatingEntityResolver(getBeanClassLoader());
 			}
 		}
@@ -301,6 +306,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	@Override
 	public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {
+
+		//把 resource 包装为 EncodedResource，
 		return loadBeanDefinitions(new EncodedResource(resource));
 	}
 
@@ -330,9 +337,12 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {
 				InputSource inputSource = new InputSource(inputStream);
+
+				// 如果有编码
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
+				//todo liziq 调用 加载 resource
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
@@ -390,6 +400,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 		try {
 			Document doc = doLoadDocument(inputSource, resource);
+
+			// 注册bean
 			int count = registerBeanDefinitions(doc, resource);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Loaded " + count + " bean definitions from " + resource);
@@ -431,6 +443,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see DocumentLoader#loadDocument
 	 */
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
+
+		//getEntityResolver： dtd / xsd 位置， 其他地方会set ，所以这里 是从本地获取
+		//getValidationModeForResource： 判断是dtd / xsd 解析
 		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
 				getValidationModeForResource(resource), isNamespaceAware());
 	}
@@ -445,9 +460,13 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected int getValidationModeForResource(Resource resource) {
 		int validationModeToUse = getValidationMode();
+
+		//自定义 校验xml
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+
+		//默认的 校验xml
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
@@ -508,9 +527,17 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+
+		//todo liziq 真正 加载 bean 的地方
+		// 使用DefaultBeanDefinitionDocumentReader 加载 BeanDefinition
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+
+		//已经加载的 BeanDefinition 个数
 		int countBefore = getRegistry().getBeanDefinitionCount();
+
+		//加载 BeanDefinition。  XmlReaderContext=createReaderContext(resource), 从 META-INF/spring.handlers 下 找到指定的 handler
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
+		//本次加载的 BeanDefinition 的个数
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 
@@ -550,6 +577,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected NamespaceHandlerResolver createDefaultNamespaceHandlerResolver() {
 		ClassLoader cl = (getResourceLoader() != null ? getResourceLoader().getClassLoader() : getBeanClassLoader());
+
+		//DefaultNamespaceHandlerResolver ：从 META-INF/spring.handlers 下 找到指定的 handler
 		return new DefaultNamespaceHandlerResolver(cl);
 	}
 

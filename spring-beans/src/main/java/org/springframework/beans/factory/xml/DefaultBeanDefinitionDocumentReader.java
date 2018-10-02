@@ -77,6 +77,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+
+	//XmlReaderContext 默认 指向 META-INF/handler
 	@Nullable
 	private XmlReaderContext readerContext;
 
@@ -129,6 +131,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
 		if (this.delegate.isDefaultNamespace(root)) {
+			// 选择 profile
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -145,7 +148,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
+		// 处理 xml 前后 的回调
 		preProcessXml(root);
+
+		//todo liziq 真正 加载 bean 的地方
 		parseBeanDefinitions(root, this.delegate);
 		postProcessXml(root);
 
@@ -172,10 +178,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				Node node = nl.item(i);
 				if (node instanceof Element) {
 					Element ele = (Element) node;
+
+					// http://www.springframework.org/schema/beans 下定义的标签就是默认标签
 					if (delegate.isDefaultNamespace(ele)) {
+						//TODO liziq 官方的默认 bean 处理，即 <bean id=""/> 这种
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						//TODO liziq 自定义bean处理，即 <dubbo:sss/> 这种 ，会 根据 element 调用到 NamespaceHandler
+						//像 <tx/>、aop 也是这样实现的
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -187,6 +198,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+
+		//todo liziq 默认bean处理，包含4种标签：import、alial、bean、beans
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
@@ -303,11 +316,16 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * and registering it with the registry.
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+
+		//todo liziq 解析 bean ，封装到 BeanDefinitionHolder (实际是 )
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
+
 		if (bdHolder != null) {
+			//装饰 ...暂不明白用来干啥  spring源码深度解析 p58 有说明
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
+				//注册 到 BeanDefinitionRegistry， map形式的bean注册中心
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
 			catch (BeanDefinitionStoreException ex) {
@@ -315,6 +333,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			//解析完bean，发送 ReaderEvent 通知 ，这个通知是 spring 内部用的，不开放给 用户
+			//暂时 通知完了 啥也没处理
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}

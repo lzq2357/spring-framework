@@ -114,6 +114,10 @@ import org.springframework.util.StringUtils;
  * @see #resolveDependency
  */
 @SuppressWarnings("serial")
+
+/**
+ * todo liziq DefaultListableBeanFactory 加载bean、的默认实现
+ * **/
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory
 		implements ConfigurableListableBeanFactory, BeanDefinitionRegistry, Serializable {
 

@@ -65,6 +65,8 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 		if (parentName != null) {
 			builder.getRawBeanDefinition().setParentName(parentName);
 		}
+
+		//这里方法一般 子类重写，相当于 获取 子类解析器的 自定义标签类型
 		Class<?> beanClass = getBeanClass(element);
 		if (beanClass != null) {
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
@@ -85,7 +87,10 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 			// Default-lazy-init applies to custom bean definitions as well.
 			builder.setLazyInit(true);
 		}
+
+		//todo liziq   调用 子类的 doParse 方法，解析自定义标签的 属性
 		doParse(element, parserContext, builder);
+
 		return builder.getBeanDefinition();
 	}
 

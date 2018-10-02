@@ -179,6 +179,7 @@ public abstract class PropertiesLoaderUtils {
 				ClassLoader.getSystemResources(resourceName));
 		Properties props = new Properties();
 		while (urls.hasMoreElements()) {
+
 			URL url = urls.nextElement();
 			URLConnection con = url.openConnection();
 			ResourceUtils.useCachesIfNecessary(con);

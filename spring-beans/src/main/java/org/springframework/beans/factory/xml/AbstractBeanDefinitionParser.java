@@ -60,7 +60,10 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
 	@Override
 	@Nullable
 	public final BeanDefinition parse(Element element, ParserContext parserContext) {
+
+		//todo liziq AbstractBeanDefinitionParser 调用 子类的 parseInternal
 		AbstractBeanDefinition definition = parseInternal(element, parserContext);
+
 		if (definition != null && !parserContext.isNested()) {
 			try {
 				String id = resolveId(element, definition, parserContext);

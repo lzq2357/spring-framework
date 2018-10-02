@@ -98,10 +98,13 @@ public class XmlValidationModeDetector {
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+
+				// todo liziq DTD校验方式， 包含 DOCTYPE的 就是DTD
 				if (hasDoctype(content)) {
 					isDtdValidated = true;
 					break;
 				}
+				// 以 < 开头的
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
