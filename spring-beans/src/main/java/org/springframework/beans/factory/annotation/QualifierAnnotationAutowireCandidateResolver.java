@@ -57,6 +57,11 @@ import org.springframework.util.StringUtils;
  * @see Qualifier
  * @see Value
  */
+
+
+/**
+ * todo liziq @autowired、@qualifier 注解解析器
+ * */
 public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwareAutowireCandidateResolver {
 
 	private final Set<Class<? extends Annotation>> qualifierTypes = new LinkedHashSet<>(2);

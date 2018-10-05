@@ -88,6 +88,9 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 
 		if (acc != null) {
 			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+
+				//todo liziq 实现aware接口的bean 后，取得一些资源，
+				// aware 居然是 通过 BeanPostProcessor 实现的。。。
 				invokeAwareInterfaces(bean);
 				return null;
 			}, acc);

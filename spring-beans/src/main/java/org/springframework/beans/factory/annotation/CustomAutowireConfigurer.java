@@ -90,6 +90,9 @@ public class CustomAutowireConfigurer implements BeanFactoryPostProcessor, BeanC
 	@Override
 	@SuppressWarnings("unchecked")
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+
+		//todo liziq ，设置 注解解析器 QualifierAnnotationAutowireCandidateResolver
+		// BeanFactoryPostProcessor.postProcessBeanFactory 方法，  是后置处理器
 		if (this.customQualifierTypes != null) {
 			if (!(beanFactory instanceof DefaultListableBeanFactory)) {
 				throw new IllegalStateException(

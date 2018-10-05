@@ -120,6 +120,8 @@ class ConstructorResolver {
 		// todo liziq 重点！！！ 有参数 构造bean，根据规则 选择 构造参数
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
+
+		//注册常用 的 属性类型解析器
 		this.beanFactory.initBeanWrapper(bw);
 
 		Constructor<?> constructorToUse = null;

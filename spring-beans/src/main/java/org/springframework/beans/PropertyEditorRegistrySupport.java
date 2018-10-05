@@ -198,6 +198,8 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	 * Actually register the default editors for this registry instance.
 	 */
 	private void createDefaultEditors() {
+
+		//todo liziq 默认的 属性类型解析器
 		this.defaultEditors = new HashMap<>(64);
 
 		// Simple editors, without parameterization capabilities.

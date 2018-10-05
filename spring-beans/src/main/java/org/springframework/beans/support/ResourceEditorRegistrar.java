@@ -99,6 +99,8 @@ public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 	 */
 	@Override
 	public void registerCustomEditors(PropertyEditorRegistry registry) {
+
+		//todo liziq 增加常用 属性注册编辑器 到 PropertyEditorRegistry
 		ResourceEditor baseEditor = new ResourceEditor(this.resourceLoader, this.propertyResolver);
 		doRegisterEditor(registry, Resource.class, baseEditor);
 		doRegisterEditor(registry, ContextResource.class, baseEditor);
