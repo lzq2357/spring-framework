@@ -135,6 +135,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			beanFactory.setSerializationId(getId());
 
 			//设置 是否允许 同名的bean覆盖，  是否允许 循环依赖。
+			//DefaultListableBeanFactory 默认都是true
 			customizeBeanFactory(beanFactory);
 
 			//使用 XmlBeanDefinitionReader 加载 xml
