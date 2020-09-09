@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,9 +45,9 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 public abstract class NettyWebSocketSessionSupport<T> extends AbstractWebSocketSession<T> {
 
 	/**
-	 * The default max size for aggregating inbound WebSocket frames.
+	 * The default max size for inbound WebSocket frames.
 	 */
-	protected static final int DEFAULT_FRAME_MAX_SIZE = 64 * 1024;
+	public static final int DEFAULT_FRAME_MAX_SIZE = 64 * 1024;
 
 
 	private static final Map<Class<?>, WebSocketMessage.Type> messageTypes;
@@ -74,10 +74,13 @@ public abstract class NettyWebSocketSessionSupport<T> extends AbstractWebSocketS
 
 	protected WebSocketMessage toMessage(WebSocketFrame frame) {
 		DataBuffer payload = bufferFactory().wrap(frame.content());
-		return new WebSocketMessage(messageTypes.get(frame.getClass()), payload);
+		return new WebSocketMessage(messageTypes.get(frame.getClass()), payload, frame);
 	}
 
 	protected WebSocketFrame toFrame(WebSocketMessage message) {
+		if (message.getNativeMessage() != null) {
+			return message.getNativeMessage();
+		}
 		ByteBuf byteBuf = NettyDataBufferFactory.toByteBuf(message.getPayload());
 		if (WebSocketMessage.Type.TEXT.equals(message.getType())) {
 			return new TextWebSocketFrame(byteBuf);
